@@ -4,7 +4,7 @@ MAINTAINER Mohit Sharma <mohitsharma44@gmail.com>
 
 # Get Python3
 RUN apk add --no-cache python3 && \
-    apk add --no-cache py-curl git ca-certificates bash zlib-dev jpeg-dev && \
+    apk add --no-cache git && \
     python3 -m ensurepip && \
     rm -r /usr/lib/python*/ensurepip && \
     pip3 install --upgrade pip setuptools && \
@@ -15,12 +15,12 @@ RUN apk add --no-cache python3 && \
     if [[ ! -e /usr/bin/pydoc ]];         then ln -sf /usr/bin/pydoc3 /usr/bin/pydoc; fi && \
     if [[ ! -e /usr/bin/easy_install ]];  then ln -sf /usr/bin/easy_install-3* /usr/bin/easy_install; fi && \
     if [[ ! -e /usr/bin/pip ]]; then ln -sf /usr/bin/pip3 /usr/bin/pip; fi && \
-    rm -r /root/.cache
+    rm -r /root/.cache && \
+    # make directory for webapp code
+    mkdir -p /opt/devel && \
+    # clone the repo
+    git clone https://github.com/Mohitsharma44/uodashboard /opt/devel/uodashboard
 
-# create a dir and clone repo to it
-RUN mkdir -p /opt/devel
-WORKDIR /opt/devel
-RUN git clone https://github.com/Mohitsharma44/uodashboard /opt/devel/uodashboard
 WORKDIR /opt/devel/uodashboard
 
 # Install required packages
@@ -28,28 +28,15 @@ RUN apk add --no-cache libstdc++ lapack-dev && \
     apk add --no-cache \
         --virtual=.build-dependencies \
         g++ gfortran musl-dev \
-        python3-dev && \
+        python3-dev ca-certificates \
+        zlib-dev jpeg-dev py-curl && \
     ln -s locale.h /usr/include/xlocale.h && \
-    LIBRARY_PATH=/lib:/usr/lib /bin/sh -c "pip install -r requirements.txt" && \
-    #pip install numpy && \
-    #pip install matplotlib && \
-    #pip install scipy && \
+    pip install --no-cache-dir wheel && \
+    LIBRARY_PATH=/lib:/usr/lib /bin/sh -c "pip install --no-cache-dir -r requirements.txt" && \
     find /usr/lib/python3.*/ -name 'tests' -exec rm -r '{}' + && \
     rm /usr/include/xlocale.h && \
     rm -r /root/.cache && \
     apk del .build-dependencies
-
-
-# Copy requirements to be installed via pip
-#COPY requirements.txt /opt/devel/uodashboard/
-# Add /lib and /usr/lib to library path and run pip install
-# Install numpy, pandas, scipy and scikit
-# install packages using pip
-#RUN pip --no-cache-dir install \
-#    'tornado' \
-#    'numpy' \
-#    'pillow' \
-#    'watchdog'
 
 # fire-up the script
 CMD ["python", "/opt/devel/uodashboard/app.py"]
