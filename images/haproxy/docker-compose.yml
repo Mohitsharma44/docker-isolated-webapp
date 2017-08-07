@@ -1,0 +1,7 @@
+haproxy:
+  build: .
+  container_name: haproxy
+  ports:
+    - "8080:8080"
+    - "9090:9090"
+    - "80:8888"
